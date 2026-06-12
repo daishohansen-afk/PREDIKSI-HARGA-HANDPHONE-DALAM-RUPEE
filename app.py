@@ -5,11 +5,12 @@ import pickle
 # Konfigurasi halaman website
 st.set_page_config(page_title="Prediksi Harga Smartphone AI", layout="centered")
 
-# Fungsi untuk memuat model dan data pendukung (.pkl) secara aman
+# Fungsi untuk memuat model dan data pendukung (.pkl) secara aman sesuai nama file yang benar
 @st.cache_resource
 def load_assets():
     try:
-        with open('smartphone_model.pkl', 'rb') as f:
+        # Perbaikan nama file sesuai berkas asli yang kamu miliki
+        with open('model_smartphone.pkl', 'rb') as f:
             model = pickle.load(f)
         with open('dropdown_options.pkl', 'rb') as f:
             options = pickle.load(f)
@@ -17,10 +18,10 @@ def load_assets():
             metrics = pickle.load(f)
         return model, options, metrics
     except Exception as e:
-        st.error(f"Gagal memuat file pkl: {e}")
+        st.error(f"Gagal memuat file konfigurasi pkl: {e}")
         return None, None, None
 
-# Eksekusi pemuatan aset
+# Eksekusi pemuatan aset (.pkl)
 model, options, metrics = load_assets()
 
 if model is not None and options is not None:
@@ -70,7 +71,7 @@ if model is not None and options is not None:
             # Urutan: ['brand_name', 'ram', 'storage', 'chipset', 'screen_size', 'battery_capacity']
             input_features = [brand_encoded, int(selected_ram), int(selected_storage), chipset_encoded, float(screen_size), int(battery_capacity)]
             
-            # Konversi ke numpy array dengan tipe data float64 murni untuk mencegah layar hitam / stuck di sistem matriks Tree
+            # Konversi ke numpy array dengan tipe data float64 murni untuk mencegah layar stuck
             input_data = np.array([input_features], dtype=np.float64)
             
             # Jalankan algoritma prediksi harga
@@ -79,13 +80,13 @@ if model is not None and options is not None:
             # Menampilkan Hasil Prediksi Harga ke Layar
             st.success("Estimasi Prediksi Harga Perangkat:")
             
-            # Tampilkan dalam simbol Rupee (₹) karena dataset awal menggunakan mata uang tersebut
+            # Tampilkan dalam simbol Rupee (₹) sesuai dengan basis mata uang dataset smartphones.csv kamu
             st.subheader(f"₹ {prediction:,.2f} Rupee")
             st.caption("Catatan: Nilai di atas merupakan hasil kalkulasi kecerdasan buatan (AI) berdasarkan riwayat tren dataset.")
             
         except Exception as prediction_error:
             st.error(f"Gagal melakukan kalkulasi prediksi harga: {prediction_error}")
-            st.warning("Tips: Pastikan urutan cell pada saat menjalankan Google Colab sudah sukses terisi secara berurutan.")
+            st.warning("Tips: Pastikan file pkl yang diunggah ke GitHub adalah versi terbaru hasil running Colab.")
 
 else:
-    st.error("Error: File 'smartphone_model.pkl', 'dropdown_options.pkl', atau 'model_metrics.pkl' tidak ditemukan di repositori GitHub Anda.")
+    st.error("Error: Struktur berkas tidak lengkap atau nama file salah. Periksa kembali penamaan file pkl Anda di GitHub.")
