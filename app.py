@@ -62,7 +62,7 @@ if model is not None and options is not None:
     # Tombol Eksekusi Prediksi Harga
     if st.button("Prediksi Harga Sekarang", type="primary"):
         try:
-            # Mengubah input teks teks dropdown menjadi index angka numerik sesuai data latih Colab
+            # Mengubah input teks dropdown menjadi index angka numerik sesuai data latih Colab
             brand_encoded = options['brand_name'].index(selected_brand)
             chipset_encoded = options['chipset'].index(selected_chipset)
             
@@ -79,7 +79,7 @@ if model is not None and options is not None:
             # Menampilkan Hasil Prediksi Harga ke Layar
             st.success("Estimasi Prediksi Harga Perangkat:")
             
-            # Deteksi jika target dataset dalam Rupee, tampilkan simbol Rupee (₹)
+            # Tampilkan dalam simbol Rupee (₹) karena dataset awal menggunakan mata uang tersebut
             st.subheader(f"₹ {prediction:,.2f} Rupee")
             st.caption("Catatan: Nilai di atas merupakan hasil kalkulasi kecerdasan buatan (AI) berdasarkan riwayat tren dataset.")
             
@@ -88,4 +88,4 @@ if model is not None and options is not None:
             st.warning("Tips: Pastikan urutan cell pada saat menjalankan Google Colab sudah sukses terisi secara berurutan.")
 
 else:
-    st.warning("Aplikasi dalam mode bersiap. Mengunduh data pustaka virtual dari repositori GitHub...")
+    st.error("Error: File 'smartphone_model.pkl', 'dropdown_options.pkl', atau 'model_metrics.pkl' tidak ditemukan di repositori GitHub Anda.")
