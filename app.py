@@ -8,7 +8,7 @@ from sklearn.metrics import mean_absolute_error, r2_score
 # Konfigurasi halaman website
 st.set_page_config(page_title="Prediksi Harga Smartphone AI", layout="centered")
 
-# Fungsi untuk memuat data, memproses EDA dasar, dan melatih model langsung di server
+# Fungsi untuk memuat data dan melatih model langsung di server (Aman dari Bug Layar Hitam)
 @st.cache_resource
 def build_and_train_model():
     # 1. Memuat dataset langsung dari repositori
@@ -18,6 +18,7 @@ def build_and_train_model():
     df.drop_duplicates(inplace=True)
     df.dropna(subset=['price'], inplace=True)
     
+    # Ambil fitur utama yang akan ditampilkan di menu dropdown
     features = ['brand_name', 'ram', 'storage', 'chipset', 'screen_size', 'battery_capacity']
     target = 'price'
     
@@ -48,6 +49,7 @@ def build_and_train_model():
     # 4. Splitting Data & Training Model Random Forest
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
+    # Gunakan 50 pohon agar proses muat sangat cepat di server gratisan
     model = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
     model.fit(X_train, y_train)
     
@@ -59,16 +61,16 @@ def build_and_train_model():
     return model, dropdown_options, mae_score, r2_val
 
 try:
-    # Menjalankan proses pembuatan model secara otomatis di server cloud
-    with st.spinner("Sedang memuat data dan mengonfigurasi kecerdasan buatan, mohon tunggu sebentar..."):
+    # Menjalankan proses di latar belakang server cloud
+    with st.spinner("Sedang memuat data dan mengonfigurasi kecerdasan buatan, mohon tunggu..."):
         model, options, mae_score, r2_val = build_and_train_model()
     
     # Bagian Header Aplikasi Web
     st.title("Aplikasi Prediksi Harga Smartphone")
     st.write("Masukkan spesifikasi smartphone di bawah ini untuk melihat hasil estimasi prediksi harganya.")
     
-    # Menampilkan performa model secara formal di website (Syarat wajib kriteria UAS)
-    st.info(f"Informasi Performa Model: Aplikasi ini menggunakan algoritma Random Forest Regressor dengan tingkat keakuratan R2 Score: {r2_val:.4f} dan rata-rata error MAE: Rp {mae_score:,.2f}.")
+    # Menampilkan performa model secara formal di website (Syarat wajib UAS nomor 4)
+    st.info(f"Informasi Performa Model: Aplikasi ini menggunakan algoritma Random Forest Regressor dengan tingkat keakuratan R2 Score: {r2_val:.4f} dan rata-rata error MAE: Rupee {mae_score:,.2f}.")
     st.markdown("---")
 
     # Pembuatan Menu Pilihan Dinamis Sesuai Kolom Dataset
@@ -94,17 +96,17 @@ try:
         chipset_encoded = options['chipset'].index(selected_chipset)
         
         # Susun parameter input data sesuai bentuk kolom saat training model
-        input_data = np.array([[brand_encoded, selected_ram, selected_storage, brand_encoded, screen_size, battery_capacity]])
+        input_data = np.array([[brand_encoded, selected_ram, selected_storage, chipset_encoded, screen_size, battery_capacity]])
         
-        # Jalankan algoritma prediksi harga
+        # Jalankan prediksi harga
         prediction = model.predict(input_data)[0]
         
         # Menampilkan Hasil Prediksi Harga ke Layar
         st.success("Estimasi Prediksi Harga Perangkat:")
-        st.subheader(f"Rp {prediction:,.2f}")
+        st.subheader(f"₹ {prediction:,.2f} Rupee")
         st.caption("Catatan: Nilai di atas merupakan hasil kalkulasi kecerdasan buatan (AI) berdasarkan tren data historis dataset.")
 
 except FileNotFoundError:
-    st.error("Error: File 'smartphones.csv' tidak ditemukan di repositori utama GitHub Anda. Pastikan Anda telah mengunggah dataset tersebut.")
+    st.error("Error: File 'smartphones.csv' tidak ditemukan di repositori utama GitHub Anda.")
 except Exception as e:
     st.error(f"Terjadi kendala teknis: {e}")
