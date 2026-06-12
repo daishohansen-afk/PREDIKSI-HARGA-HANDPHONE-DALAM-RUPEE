@@ -5,12 +5,12 @@ import pickle
 # Konfigurasi halaman website
 st.set_page_config(page_title="Prediksi Harga Smartphone AI", layout="centered")
 
-# Fungsi untuk memuat model dan data pendukung (.pkl) secara aman sesuai nama file yang benar
+# Fungsi untuk memuat model dan data pendukung (.pkl) secara aman sesuai nama file smartphone_model.pkl
 @st.cache_resource
 def load_assets():
     try:
-        # Perbaikan nama file sesuai berkas asli yang kamu miliki
-        with open('model_smartphone.pkl', 'rb') as f:
+        # Nama file sudah diganti menjadi smartphone_model.pkl sesuai permintaanmu
+        with open('smartphone_model.pkl', 'rb') as f:
             model = pickle.load(f)
         with open('dropdown_options.pkl', 'rb') as f:
             options = pickle.load(f)
@@ -80,7 +80,7 @@ if model is not None and options is not None:
             # Menampilkan Hasil Prediksi Harga ke Layar
             st.success("Estimasi Prediksi Harga Perangkat:")
             
-            # Tampilkan dalam simbol Rupee (₹) sesuai dengan basis mata uang dataset smartphones.csv kamu
+            # Tampilkan dalam simbol Rupee (₹) sesuai mata uang dataset utama
             st.subheader(f"₹ {prediction:,.2f} Rupee")
             st.caption("Catatan: Nilai di atas merupakan hasil kalkulasi kecerdasan buatan (AI) berdasarkan riwayat tren dataset.")
             
