@@ -29,12 +29,19 @@ except Exception as e:
 
 # Cek dropdown
 try:
+
     with open("dropdown_options.pkl", "rb") as f:
         dropdown_options = pickle.load(f)
 
     st.success("Dropdown berhasil dimuat!")
 
+    st.write("Isi dropdown_options:")
+    st.write(dropdown_options)
+
+    st.stop()
+
 except Exception as e:
+
     st.error("Dropdown gagal dimuat")
     st.exception(e)
     st.stop()
