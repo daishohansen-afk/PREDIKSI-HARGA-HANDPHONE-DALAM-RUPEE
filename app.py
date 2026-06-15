@@ -1,188 +1,103 @@
 import streamlit as st
-import pandas as pd
 import pickle
+import pandas as pd
 import os
 
-st.set_page_config(
-page_title="Prediksi Harga Smartphone",
-page_icon="📱",
-layout="centered"
-)
+st.set_page_config(page_title="Prediksi Harga Smartphone")
 
 st.title("📱 Prediksi Harga Smartphone")
 
-# =====================
+# Debug file
+st.subheader("Debug File")
 
-# DEBUG INFO
-
-# =====================
-
-st.subheader("Debug Info")
-
-try:
-st.write("Daftar file:")
+st.write("File yang ditemukan:")
 st.write(os.listdir())
 
-```
-if os.path.exists("model_smartphone.pkl"):
-    st.write(
-        "Ukuran model_smartphone.pkl:",
-        os.path.getsize("model_smartphone.pkl"),
-        "bytes"
-    )
-else:
-    st.error("model_smartphone.pkl tidak ditemukan")
-```
+# Cek model
+try:
+    with open("model_smartphone.pkl", "rb") as f:
+        model = pickle.load(f)
+
+    st.success("Model berhasil dimuat!")
 
 except Exception as e:
-st.error(e)
+    st.error("Model gagal dimuat")
+    st.exception(e)
+    st.stop()
 
-# =====================
-
-# LOAD FILE
-
-# =====================
-
+# Cek dropdown
 try:
+    with open("dropdown_options.pkl", "rb") as f:
+        dropdown_options = pickle.load(f)
 
-```
-with open("model_smartphone.pkl", "rb") as f:
-    model = pickle.load(f)
-
-with open("dropdown_options.pkl", "rb") as f:
-    dropdown_options = pickle.load(f)
-
-with open("model_metrics.pkl", "rb") as f:
-    metrics = pickle.load(f)
-```
+    st.success("Dropdown berhasil dimuat!")
 
 except Exception as e:
+    st.error("Dropdown gagal dimuat")
+    st.exception(e)
+    st.stop()
 
-```
-st.error("Gagal membaca file pickle")
-st.exception(e)
-st.stop()
-```
-
-# =====================
-
-# SIDEBAR
-
-# =====================
-
-st.sidebar.header("Informasi Model")
-
-try:
-st.sidebar.write(
-f"Model : {metrics['model_name']}"
-)
-
-```
-st.sidebar.write(
-    f"R² Score : {metrics['r2_score']}"
-)
-
-st.sidebar.write(
-    f"MAE : {metrics['mae']}"
-)
-```
-
-except:
-pass
-
-# =====================
-
-# INPUT
-
-# =====================
-
+# Input user
 brand = st.selectbox(
-"Merk Smartphone",
-dropdown_options["brand_name"]
+    "Brand",
+    dropdown_options["brand_name"]
 )
 
 ram = st.selectbox(
-"RAM",
-dropdown_options["ram"]
+    "RAM",
+    dropdown_options["ram"]
 )
 
 storage = st.selectbox(
-"Storage",
-dropdown_options["storage"]
+    "Storage",
+    dropdown_options["storage"]
 )
 
 chipset = st.selectbox(
-"Chipset",
-dropdown_options["chipset"]
+    "Chipset",
+    dropdown_options["chipset"]
 )
 
-screen_size = st.slider(
-"Ukuran Layar (Inch)",
-4.0,
-8.0,
-6.5,
-0.1
+screen_size = st.number_input(
+    "Screen Size",
+    value=6.5
 )
 
-battery_capacity = st.slider(
-"Kapasitas Baterai (mAh)",
-2000,
-8000,
-5000,
-100
+battery_capacity = st.number_input(
+    "Battery Capacity",
+    value=5000
 )
 
-# =====================
-
-# PREDIKSI
-
-# =====================
-
+# Prediksi
 if st.button("Prediksi Harga"):
 
-```
-try:
+    try:
 
-    brand_encoded = dropdown_options[
-        "brand_name"
-    ].index(brand)
+        brand_encoded = dropdown_options["brand_name"].index(brand)
+        chipset_encoded = dropdown_options["chipset"].index(chipset)
 
-    chipset_encoded = dropdown_options[
-        "chipset"
-    ].index(chipset)
-
-    input_data = pd.DataFrame(
-        [[
+        input_data = pd.DataFrame([[
             brand_encoded,
             ram,
             storage,
             chipset_encoded,
             screen_size,
             battery_capacity
-        ]],
-        columns=[
+        ]], columns=[
             "brand_name",
             "ram",
             "storage",
             "chipset",
             "screen_size",
             "battery_capacity"
-        ]
-    )
+        ])
 
-    prediction = model.predict(
-        input_data
-    )[0]
+        prediction = model.predict(input_data)[0]
 
-    st.success(
-        f"💰 Perkiraan Harga: Rp {prediction:,.0f}"
-    )
+        st.success(
+            f"Perkiraan Harga: ₹ {prediction:,.0f}"
+        )
 
-except Exception as e:
-
-    st.error(
-        "Prediksi gagal dijalankan"
-    )
-
-    st.exception(e)
-```
+    except Exception as e:
+        st.error("Prediksi gagal")
+        st.exception(e)
