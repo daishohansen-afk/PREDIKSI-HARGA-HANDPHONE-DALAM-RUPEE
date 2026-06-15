@@ -35,46 +35,32 @@ try:
 
     st.success("Dropdown berhasil dimuat!")
 
-    st.write("Isi dropdown_options:")
-    st.write(dropdown_options)
-
-    st.stop()
-
 except Exception as e:
 
     st.error("Dropdown gagal dimuat")
     st.exception(e)
     st.stop()
 
-# Input user
+# Input User
+
 brand = st.selectbox(
     "Brand",
-    dropdown_options["brand_name"]
+    dropdown_options["Brand"]
 )
 
-ram = st.selectbox(
-    "RAM",
-    dropdown_options["ram"]
+model_name = st.selectbox(
+    "Model",
+    dropdown_options["Model"]
 )
 
-storage = st.selectbox(
-    "Storage",
-    dropdown_options["storage"]
+color = st.selectbox(
+    "Color",
+    dropdown_options["Color"]
 )
 
-chipset = st.selectbox(
-    "Chipset",
-    dropdown_options["chipset"]
-)
-
-screen_size = st.number_input(
-    "Screen Size",
-    value=6.5
-)
-
-battery_capacity = st.number_input(
-    "Battery Capacity",
-    value=5000
+free_shipping = st.selectbox(
+    "Free Shipping",
+    dropdown_options["Free"]
 )
 
 # Prediksi
@@ -82,31 +68,33 @@ if st.button("Prediksi Harga"):
 
     try:
 
-        brand_encoded = dropdown_options["brand_name"].index(brand)
-        chipset_encoded = dropdown_options["chipset"].index(chipset)
+        brand_encoded = dropdown_options["Brand"].index(brand)
+
+        model_encoded = dropdown_options["Model"].index(model_name)
+
+        color_encoded = dropdown_options["Color"].index(color)
+
+        free_encoded = dropdown_options["Free"].index(free_shipping)
 
         input_data = pd.DataFrame([[
             brand_encoded,
-            ram,
-            storage,
-            chipset_encoded,
-            screen_size,
-            battery_capacity
+            model_encoded,
+            color_encoded,
+            free_encoded
         ]], columns=[
-            "brand_name",
-            "ram",
-            "storage",
-            "chipset",
-            "screen_size",
-            "battery_capacity"
+            "Brand",
+            "Model",
+            "Color",
+            "Free"
         ])
 
         prediction = model.predict(input_data)[0]
 
         st.success(
-            f"Perkiraan Harga: ₹ {prediction:,.0f}"
+            f"Perkiraan Harga Smartphone: ₹ {prediction:,.2f}"
         )
 
     except Exception as e:
+
         st.error("Prediksi gagal")
         st.exception(e)
