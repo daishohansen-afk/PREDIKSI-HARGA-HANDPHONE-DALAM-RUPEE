@@ -7,19 +7,11 @@ st.set_page_config(page_title="Prediksi Harga Smartphone")
 
 st.title("📱 Prediksi Harga Smartphone")
 
-# Debug file
-st.subheader("Debug File")
-
-st.write("File yang ditemukan:")
-st.write(os.listdir())
-
 # Cek model
 try:
 
     with open("smartphone_model.pkl", "rb") as f:
         model = pickle.load(f)
-
-    st.success("Model berhasil dimuat!")
 
 except Exception as e:
 
@@ -33,7 +25,6 @@ try:
     with open("dropdown_options.pkl", "rb") as f:
         dropdown_options = pickle.load(f)
 
-    st.success("Dropdown berhasil dimuat!")
 
 except Exception as e:
 
