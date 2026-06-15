@@ -1,92 +1,76 @@
 import streamlit as st
-import numpy as np
+import pandas as pd
 import pickle
 
-# Konfigurasi halaman website
-st.set_page_config(page_title="Prediksi Harga Smartphone AI", layout="centered")
+# Load model dan encoder
+model = pickle.load(open('smartphone_model.pkl', 'rb'))
+brand_encoder = pickle.load(open('brand_encoder.pkl', 'rb'))
+chipset_encoder = pickle.load(open('chipset_encoder.pkl', 'rb'))
 
-# Fungsi untuk memuat model dan data pendukung (.pkl) secara aman sesuai nama file smartphone_model.pkl
-@st.cache_resource
-def load_assets():
-    try:
-        # Nama file sudah diganti menjadi smartphone_model.pkl sesuai permintaanmu
-        with open('smartphone_model.pkl', 'rb') as f:
-            model = pickle.load(f)
-        with open('dropdown_options.pkl', 'rb') as f:
-            options = pickle.load(f)
-        with open('model_metrics.pkl', 'rb') as f:
-            metrics = pickle.load(f)
-        return model, options, metrics
-    except Exception as e:
-        st.error(f"Gagal memuat file konfigurasi pkl: {e}")
-        return None, None, None
+# Load dataset untuk mengambil pilihan dropdown
+df = pd.read_csv('smartphones.csv')
 
-# Eksekusi pemuatan aset (.pkl)
-model, options, metrics = load_assets()
+st.title("Prediksi Harga Smartphone")
 
-if model is not None and options is not None:
-    # Bagian Header Aplikasi Web
-    st.title("Aplikasi Prediksi Harga Smartphone")
-    st.write("Masukkan spesifikasi smartphone di bawah ini untuk melihat hasil estimasi prediksi harganya.")
-    
-    # Menampilkan performa model secara formal di website (Syarat wajib kriteria UAS nomor 4)
-    if metrics and 'model_name' in metrics:
-        st.info(f"Informasi Performa Model: Aplikasi ini menggunakan algoritma {metrics['model_name']} dengan tingkat keakuratan R2 Score: {metrics['r2_score']} dan rata-rata error MAE: {metrics['mae']:,}.")
-    st.markdown("---")
+# Dropdown
+brand = st.selectbox(
+    "Pilih Merk",
+    sorted(df['brand_name'].unique())
+)
 
-    # Pembuatan Menu Pilihan Dinamis Berdasarkan File pkl
-    st.subheader("Atur Spesifikasi Perangkat")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Pilihan Merk/Brand HP
-        selected_brand = st.selectbox("Pilih Merk/Brand:", options['brand_name'])
-        
-        # Pilihan Kapasitas RAM
-        selected_ram = st.selectbox("Kapasitas RAM (GB):", options['ram'])
-        
-        # Pilihan Kapasitas Penyimpanan (Storage)
-        selected_storage = st.selectbox("Kapasitas Memori Internal (GB):", options['storage'])
+ram = st.selectbox(
+    "RAM (GB)",
+    sorted(df['ram'].unique())
+)
 
-    with col2:
-        # Pilihan Jenis Chipset
-        selected_chipset = st.selectbox("Pilih Tipe Chipset:", options['chipset'])
-        
-        # Input Ukuran Layar
-        screen_size = st.number_input("Ukuran Layar (Inchi):", min_value=4.0, max_value=8.0, value=6.5, step=0.1)
-        
-        # Input Kapasitas Baterai
-        battery_capacity = st.number_input("Kapasitas Baterai (mAh):", min_value=2000, max_value=7000, value=5000, step=100)
+storage = st.selectbox(
+    "Storage (GB)",
+    sorted(df['storage'].unique())
+)
 
-    st.markdown("---")
+chipset = st.selectbox(
+    "Chipset",
+    sorted(df['chipset'].unique())
+)
 
-    # Tombol Eksekusi Prediksi Harga
-    if st.button("Prediksi Harga Sekarang", type="primary"):
-        try:
-            # Mengubah input teks dropdown menjadi index angka numerik sesuai data latih Colab
-            brand_encoded = options['brand_name'].index(selected_brand)
-            chipset_encoded = options['chipset'].index(selected_chipset)
-            
-            # Susun parameter input data secara berurutan
-            # Urutan: ['brand_name', 'ram', 'storage', 'chipset', 'screen_size', 'battery_capacity']
-            input_features = [brand_encoded, int(selected_ram), int(selected_storage), chipset_encoded, float(screen_size), int(battery_capacity)]
-            
-            # Konversi ke numpy array dengan tipe data float64 murni untuk mencegah layar stuck
-            input_data = np.array([input_features], dtype=np.float64)
-            
-            # Jalankan algoritma prediksi harga
-            prediction = model.predict(input_data)[0]
-            
-            # Menampilkan Hasil Prediksi Harga ke Layar
-            st.success("Estimasi Prediksi Harga Perangkat:")
-            
-            # Tampilkan dalam simbol Rupee (₹) sesuai mata uang dataset utama
-            st.subheader(f"₹ {prediction:,.2f} Rupee")
-            st.caption("Catatan: Nilai di atas merupakan hasil kalkulasi kecerdasan buatan (AI) berdasarkan riwayat tren dataset.")
-            
-        except Exception as prediction_error:
-            st.error(f"Gagal melakukan kalkulasi prediksi harga: {prediction_error}")
-            st.warning("Tips: Pastikan file pkl yang diunggah ke GitHub adalah versi terbaru hasil running Colab.")
+screen_size = st.slider(
+    "Ukuran Layar",
+    float(df['screen_size'].min()),
+    float(df['screen_size'].max()),
+    float(df['screen_size'].mean())
+)
 
-else:
-    st.error("Error: Struktur berkas tidak lengkap atau nama file salah. Periksa kembali penamaan file pkl Anda di GitHub.")
+battery = st.slider(
+    "Kapasitas Baterai",
+    int(df['battery_capacity'].min()),
+    int(df['battery_capacity'].max()),
+    int(df['battery_capacity'].mean())
+)
+
+# Tombol prediksi
+if st.button("Prediksi Harga"):
+
+    brand_encoded = brand_encoder.transform([brand])[0]
+    chipset_encoded = chipset_encoder.transform([chipset])[0]
+
+    input_data = pd.DataFrame([[
+        brand_encoded,
+        ram,
+        storage,
+        chipset_encoded,
+        screen_size,
+        battery
+    ]], columns=[
+        'brand_name',
+        'ram',
+        'storage',
+        'chipset',
+        'screen_size',
+        'battery_capacity'
+    ])
+
+    prediction = model.predict(input_data)[0]
+
+    st.success(
+        f"Perkiraan Harga Smartphone: Rp {prediction:,.0f}"
+    )
