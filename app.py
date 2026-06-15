@@ -15,9 +15,8 @@ st.write(os.listdir())
 
 # Cek model
 try:
-    with open("model_smartphone.pkl", "rb") as f:
-        model = pickle.load(f)
-
+    with open("smartphone_model.pkl", "rb") as f:
+    model = pickle.load(f)
     st.success("Model berhasil dimuat!")
 
 except Exception as e:
