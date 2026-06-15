@@ -2,75 +2,126 @@ import streamlit as st
 import pandas as pd
 import pickle
 
-# Load model dan encoder
-model = pickle.load(open('smartphone_model.pkl', 'rb'))
-brand_encoder = pickle.load(open('brand_encoder.pkl', 'rb'))
-chipset_encoder = pickle.load(open('chipset_encoder.pkl', 'rb'))
+# =========================
+# LOAD FILE
+# =========================
 
-# Load dataset untuk mengambil pilihan dropdown
-df = pd.read_csv('smartphones.csv')
+with open("model_smartphone.pkl", "rb") as f:
+    model = pickle.load(f)
 
-st.title("Prediksi Harga Smartphone")
+with open("dropdown_options.pkl", "rb") as f:
+    dropdown_options = pickle.load(f)
 
-# Dropdown
+with open("model_metrics.pkl", "rb") as f:
+    metrics = pickle.load(f)
+
+# =========================
+# HEADER
+# =========================
+
+st.set_page_config(
+    page_title="Prediksi Harga Smartphone",
+    page_icon="📱",
+    layout="centered"
+)
+
+st.title("📱 Prediksi Harga Smartphone")
+st.write("Masukkan spesifikasi smartphone untuk memperkirakan harga.")
+
+# =========================
+# SIDEBAR
+# =========================
+
+st.sidebar.header("Informasi Model")
+
+st.sidebar.write(
+    f"**Model:** {metrics['model_name']}"
+)
+
+st.sidebar.write(
+    f"**R² Score:** {metrics['r2_score']}"
+)
+
+st.sidebar.write(
+    f"**MAE:** {metrics['mae']}"
+)
+
+# =========================
+# INPUT USER
+# =========================
+
 brand = st.selectbox(
-    "Pilih Merk",
-    sorted(df['brand_name'].unique())
+    "Merk Smartphone",
+    dropdown_options["brand_name"]
 )
 
 ram = st.selectbox(
     "RAM (GB)",
-    sorted(df['ram'].unique())
+    dropdown_options["ram"]
 )
 
 storage = st.selectbox(
     "Storage (GB)",
-    sorted(df['storage'].unique())
+    dropdown_options["storage"]
 )
 
 chipset = st.selectbox(
     "Chipset",
-    sorted(df['chipset'].unique())
+    dropdown_options["chipset"]
 )
 
 screen_size = st.slider(
-    "Ukuran Layar",
-    float(df['screen_size'].min()),
-    float(df['screen_size'].max()),
-    float(df['screen_size'].mean())
+    "Ukuran Layar (Inch)",
+    min_value=4.0,
+    max_value=8.0,
+    value=6.5,
+    step=0.1
 )
 
-battery = st.slider(
-    "Kapasitas Baterai",
-    int(df['battery_capacity'].min()),
-    int(df['battery_capacity'].max()),
-    int(df['battery_capacity'].mean())
+battery_capacity = st.slider(
+    "Kapasitas Baterai (mAh)",
+    min_value=2000,
+    max_value=8000,
+    value=5000,
+    step=100
 )
 
-# Tombol prediksi
-if st.button("Prediksi Harga"):
+# =========================
+# PREDIKSI
+# =========================
 
-    brand_encoded = brand_encoder.transform([brand])[0]
-    chipset_encoded = chipset_encoder.transform([chipset])[0]
+if st.button("🔍 Prediksi Harga"):
 
-    input_data = pd.DataFrame([[
-        brand_encoded,
-        ram,
-        storage,
-        chipset_encoded,
-        screen_size,
-        battery
-    ]], columns=[
-        'brand_name',
-        'ram',
-        'storage',
-        'chipset',
-        'screen_size',
-        'battery_capacity'
-    ])
+    try:
 
-    prediction = model.predict(input_data)[0]
+        brand_encoded = dropdown_options["brand_name"].index(brand)
 
-    st.success(
-        f"Perkiraan Harga Smartphone: Rp {prediction:,.0f}"
-    )
+        chipset_encoded = dropdown_options["chipset"].index(chipset)
+
+        input_data = pd.DataFrame(
+            [[
+                brand_encoded,
+                ram,
+                storage,
+                chipset_encoded,
+                screen_size,
+                battery_capacity
+            ]],
+            columns=[
+                "brand_name",
+                "ram",
+                "storage",
+                "chipset",
+                "screen_size",
+                "battery_capacity"
+            ]
+        )
+
+        prediction = model.predict(input_data)[0]
+
+        st.success(
+            f"💰 Perkiraan Harga: Rp {prediction:,.0f}"
+        )
+
+    except Exception as e:
+        st.error(f"Terjadi error: {e}")
