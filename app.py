@@ -12,7 +12,7 @@ model_path = 'phone_price_model.pkl'
 meta_path = 'categories_metadata.pkl'
 
 if not os.path.exists(model_path) or not os.path.exists(meta_path):
-    st.error("⚠️ CRITICAL ERROR: Model files are missing from the repository directory!")
+    st.error("⚠️ CRITICAL ERROR: Model components are missing from the root repository folder!")
     st.stop()
 
 @st.cache_resource
@@ -26,7 +26,7 @@ def load_assets():
 try:
     model, metadata = load_assets()
     
-    # Performance metrics display panel
+    # Sidebar Metrics Dashboard
     st.sidebar.header("📊 Model Accuracy Stats")
     st.sidebar.markdown(f"""
     - **Selected Model:** Decision Tree (4-Param)
@@ -37,32 +37,19 @@ try:
 
     st.subheader("Specify Target Smartphone Metrics")
     
-    # Extract lists safely with fallbacks to avoid any KeyError from older cache versions
-    brands_list = metadata.get('brands', [])
-    ram_list = metadata.get('ram_options', [2, 4, 6, 8, 12, 16])
-    storage_list = metadata.get('storage_options', [32, 64, 128, 256, 512])
-    
-    # Dynamic key safety fallback for colors / model options
-    if 'colors' in metadata:
-        color_list = metadata['colors']
-    elif 'models' in metadata:
-        color_list = metadata['models']
-    else:
-        color_list = ["Black", "Blue", "White", "Gray", "Silver", "Gold"]
-
-    # Render 4 parameter UI layout
+    # User Input Selectboxes
     col1, col2 = st.columns(2)
     with col1:
-        chosen_brand = st.selectbox("Brand Name", options=brands_list)
-        chosen_ram = st.selectbox("RAM (GB)", options=ram_list)
+        chosen_brand = st.selectbox("Brand Name", options=metadata['brands'])
+        chosen_ram = st.selectbox("RAM (GB)", options=metadata['ram_options'])
     with col2:
-        chosen_color = st.selectbox("Device Property / Color", options=color_list)
-        chosen_storage = st.selectbox("Internal Storage (GB)", options=storage_list)
+        chosen_color = st.selectbox("Device Color", options=metadata['colors'])
+        chosen_storage = st.selectbox("Internal Storage (GB)", options=metadata['storage_options'])
 
     st.markdown("---")
     
     if st.button("🔮 Generate Price Evaluation", type="primary"):
-        # Create input dataframe aligning to the 4 parameters
+        # Create a raw input dataframe matching your Colab X features exactly
         query_df = pd.DataFrame([{
             'Brand': chosen_brand,
             'RAM': float(chosen_ram),
@@ -70,7 +57,7 @@ try:
             'Color': chosen_color
         }])
         
-        # Real-time evaluation mapping
+        # The pipeline handles raw string encoding internally, eliminating feature name errors!
         prediction = model.predict(query_df)[0]
             
         st.success("### Final Valuation Estimate")
@@ -78,5 +65,4 @@ try:
         st.caption(f"Configured Layout: {chosen_brand} | {chosen_color} | {chosen_ram}GB RAM / {chosen_storage}GB Storage")
 
 except Exception as e:
-    st.error(f"An unexpected parsing exception occurred: {e}")
-    st.info("💡 Quick Fix: If you just pushed updates, open the App Settings menu in the bottom-right corner of Streamlit Cloud, click 'Clear Cache', and 'Reboot App'.")
+    st.error(f"Prediction process halted: {e}")
