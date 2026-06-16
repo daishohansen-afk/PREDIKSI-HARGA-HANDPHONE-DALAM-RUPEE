@@ -1,91 +1,59 @@
 import streamlit as st
-import pickle
 import pandas as pd
-import os
+import pickle
 
-st.set_page_config(page_title="Prediksi Harga Smartphone")
+st.set_page_config(page_title="Price Predictor", page_icon="📱", layout="centered")
 
-st.title("📱 Prediksi Harga Smartphone")
+st.title("📱 Smartphone Price Prediction App")
+st.markdown("Enter specifications below to generate an immediate valuation matrix built from our model pipeline.")
 
-# Cek model
-try:
-
-    with open("smartphone_model.pkl", "rb") as f:
+@st.cache_resource
+def load_assets():
+    with open('phone_price_model.pkl', 'rb') as f:
         model = pickle.load(f)
+    with open('categories_metadata.pkl', 'rb') as f:
+        meta = pickle.load(f)
+    return model, meta
 
-except Exception as e:
-
-    st.error("Model gagal dimuat")
-    st.exception(e)
-    st.stop()
-
-# Cek dropdown
 try:
+    model, metadata = load_assets()
+    
+    # Sidebar stats displaying requested validation accuracy/metrics
+    st.sidebar.header("📊 Model Accuracy Stats")
+    st.sidebar.markdown(f"""
+    - **Selected Model:** Decision Tree
+    - **R² Score:** {metadata['metrics']['r2']}
+    - **Mean Absolute Error:** ₹{metadata['metrics']['mae']:,}
+    - **Root MSE:** ₹{metadata['metrics']['rmse']:,}
+    """)
 
-    with open("dropdown_options.pkl", "rb") as f:
-        dropdown_options = pickle.load(f)
+    st.subheader("Specify Target Smartphone Metrics")
+    
+    # 4 Input Parameters layout
+    col1, col2 = st.columns(2)
+    with col1:
+        chosen_brand = st.selectbox("Brand Name", options=metadata['brands'])
+        chosen_ram = st.selectbox("RAM (GB)", options=metadata['ram_options'])
+    with col2:
+        chosen_model = st.selectbox("Model Series", options=metadata['models'])
+        chosen_storage = st.selectbox("Internal Storage (GB)", options=metadata['storage_options'])
 
+    st.markdown("---")
+    
+    if st.button("🔮 Generate Price Evaluation", type="primary"):
+        # Formatting data matching preprocessing pipeline expectations
+        query_df = pd.DataFrame([{
+            'Brand': chosen_brand,
+            'Model': chosen_model,
+            'RAM': float(chosen_ram),
+            'Storage': float(chosen_storage)
+        }])
+        
+        prediction = model.predict(query_df)[0]
+        
+        st.success("### Final Valuation Estimate")
+        st.metric(label="Calculated Base Value", value=f"₹ {prediction:,.2f}")
+        st.caption(f"Configured Layout: {chosen_brand} {chosen_model} ({chosen_ram}GB / {chosen_storage}GB)")
 
 except Exception as e:
-
-    st.error("Dropdown gagal dimuat")
-    st.exception(e)
-    st.stop()
-
-# Input User
-
-brand = st.selectbox(
-    "Brand",
-    dropdown_options["Brand"]
-)
-
-model_name = st.selectbox(
-    "Model",
-    dropdown_options["Model"]
-)
-
-color = st.selectbox(
-    "Color",
-    dropdown_options["Color"]
-)
-
-free_shipping = st.selectbox(
-    "Free Shipping",
-    dropdown_options["Free"]
-)
-
-# Prediksi
-if st.button("Prediksi Harga"):
-
-    try:
-
-        brand_encoded = dropdown_options["Brand"].index(brand)
-
-        model_encoded = dropdown_options["Model"].index(model_name)
-
-        color_encoded = dropdown_options["Color"].index(color)
-
-        free_encoded = dropdown_options["Free"].index(free_shipping)
-
-        input_data = pd.DataFrame([[
-            brand_encoded,
-            model_encoded,
-            color_encoded,
-            free_encoded
-        ]], columns=[
-            "Brand",
-            "Model",
-            "Color",
-            "Free"
-        ])
-
-        prediction = model.predict(input_data)[0]
-
-        st.success(
-            f"Perkiraan Harga Smartphone: ₹ {prediction:,.2f}"
-        )
-
-    except Exception as e:
-
-        st.error("Prediksi gagal")
-        st.exception(e)
+    st.error(f"Waiting for files to be uploaded or executed properly. Details: {e}")
