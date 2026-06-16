@@ -26,6 +26,7 @@ def load_assets():
 try:
     model, metadata = load_assets()
     
+    # Performance metrics display panel
     st.sidebar.header("📊 Model Accuracy Stats")
     st.sidebar.markdown(f"""
     - **Selected Model:** Decision Tree (4-Param)
@@ -36,19 +37,32 @@ try:
 
     st.subheader("Specify Target Smartphone Metrics")
     
-    # Render the 4 mandatory user input widgets
+    # Extract lists safely with fallbacks to avoid any KeyError from older cache versions
+    brands_list = metadata.get('brands', [])
+    ram_list = metadata.get('ram_options', [2, 4, 6, 8, 12, 16])
+    storage_list = metadata.get('storage_options', [32, 64, 128, 256, 512])
+    
+    # Dynamic key safety fallback for colors / model options
+    if 'colors' in metadata:
+        color_list = metadata['colors']
+    elif 'models' in metadata:
+        color_list = metadata['models']
+    else:
+        color_list = ["Black", "Blue", "White", "Gray", "Silver", "Gold"]
+
+    # Render 4 parameter UI layout
     col1, col2 = st.columns(2)
     with col1:
-        chosen_brand = st.selectbox("Brand Name", options=metadata['brands'])
-        chosen_ram = st.selectbox("RAM (GB)", options=metadata['ram_options'])
+        chosen_brand = st.selectbox("Brand Name", options=brands_list)
+        chosen_ram = st.selectbox("RAM (GB)", options=ram_list)
     with col2:
-        chosen_color = st.selectbox("Device Color", options=metadata['colors'])
-        chosen_storage = st.selectbox("Internal Storage (GB)", options=metadata['storage_options'])
+        chosen_color = st.selectbox("Device Property / Color", options=color_list)
+        chosen_storage = st.selectbox("Internal Storage (GB)", options=storage_list)
 
     st.markdown("---")
     
     if st.button("🔮 Generate Price Evaluation", type="primary"):
-        # Wrap everything beautifully into the dataframe format expected by the model
+        # Create input dataframe aligning to the 4 parameters
         query_df = pd.DataFrame([{
             'Brand': chosen_brand,
             'RAM': float(chosen_ram),
@@ -56,7 +70,7 @@ try:
             'Color': chosen_color
         }])
         
-        # Calculate real-time prediction
+        # Real-time evaluation mapping
         prediction = model.predict(query_df)[0]
             
         st.success("### Final Valuation Estimate")
@@ -64,4 +78,5 @@ try:
         st.caption(f"Configured Layout: {chosen_brand} | {chosen_color} | {chosen_ram}GB RAM / {chosen_storage}GB Storage")
 
 except Exception as e:
-    st.error(f"An error occurred while running prediction: {e}")
+    st.error(f"An unexpected parsing exception occurred: {e}")
+    st.info("💡 Quick Fix: If you just pushed updates, open the App Settings menu in the bottom-right corner of Streamlit Cloud, click 'Clear Cache', and 'Reboot App'.")
