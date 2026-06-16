@@ -12,7 +12,7 @@ model_path = 'phone_price_model.pkl'
 meta_path = 'categories_metadata.pkl'
 
 if not os.path.exists(model_path) or not os.path.exists(meta_path):
-    st.error("⚠️ CRITICAL ERROR: Model components are missing from the root repository folder!")
+    st.error("⚠️ CRITICAL ERROR: Model elements are missing from the root directory folder!")
     st.stop()
 
 @st.cache_resource
@@ -26,7 +26,11 @@ def load_assets():
 try:
     model, metadata = load_assets()
     
-    # Sidebar Metrics Dashboard
+    # Extract structural map components safely
+    brand_map = metadata['brand_map']
+    color_map = metadata['color_map']
+    
+    # Render user interactive parameters requested
     st.sidebar.header("📊 Model Accuracy Stats")
     st.sidebar.markdown(f"""
     - **Selected Model:** Decision Tree (4-Param)
@@ -37,28 +41,32 @@ try:
 
     st.subheader("Specify Target Smartphone Metrics")
     
-    # User Input Selectboxes
+    # 4 Input Parameters layout selection arrays
     col1, col2 = st.columns(2)
     with col1:
-        chosen_brand = st.selectbox("Brand Name", options=metadata['brands'])
+        chosen_brand = st.selectbox("Brand Name", options=list(brand_map.keys()))
         chosen_ram = st.selectbox("RAM (GB)", options=metadata['ram_options'])
     with col2:
-        chosen_color = st.selectbox("Device Color", options=metadata['colors'])
+        chosen_color = st.selectbox("Device Color", options=list(color_map.keys()))
         chosen_storage = st.selectbox("Internal Storage (GB)", options=metadata['storage_options'])
 
     st.markdown("---")
     
     if st.button("🔮 Generate Price Evaluation", type="primary"):
-        # Create a raw input dataframe matching your Colab X features exactly
-        query_df = pd.DataFrame([{
-            'Brand': chosen_brand,
+        # Map the selected string values to their corresponding numeric values
+        mapped_brand = brand_map[chosen_brand]
+        mapped_color = color_map[chosen_color]
+        
+        # Build the exact array shape matching our training layout: ['Brand', 'RAM', 'Storage', 'Color']
+        query_data = pd.DataFrame([{
+            'Brand': int(mapped_brand),
             'RAM': float(chosen_ram),
             'Storage': float(chosen_storage),
-            'Color': chosen_color
+            'Color': int(mapped_color)
         }])
         
-        # The pipeline handles raw string encoding internally, eliminating feature name errors!
-        prediction = model.predict(query_df)[0]
+        # Calculate real-time mathematical inference
+        prediction = model.predict(query_data)[0]
             
         st.success("### Final Valuation Estimate")
         st.metric(label="Calculated Base Value", value=f"₹ {prediction:,.2f}")
